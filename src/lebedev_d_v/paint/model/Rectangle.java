@@ -2,8 +2,8 @@ package lebedev_d_v.paint.model;
 
 public class Rectangle {
 
-    public int x, y, w, h;
-    public String color;
+    private int x, y, w, h;
+    private String color;
 
     public int getX() {
         return x;
