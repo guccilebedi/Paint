@@ -2,8 +2,8 @@ package lebedev_d_v.paint.model;
 
 public class Circle {
 
-    public int x, y, r;
-    public String color;
+    private int x, y, r;
+    private String color;
 
     public int getX() {
         return x;

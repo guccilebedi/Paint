@@ -1,71 +1,66 @@
 package lebedev_d_v.paint.view;
 
-import lebedev_d_v.paint.service.DrawArea;
-
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import javax.swing.*;
 
 public class PaintWindow {
 
-    JButton clearButton, saveButton, chooseColorButton, changeBrushWidthButton, rectangleButton, circleButton;
+    JButton clearButton, saveButton, chooseColorButton, changeBrushWidthButton, brushButton, rectangleButton, circleButton;
     DrawArea drawArea;
-
-    ActionListener actionListener = new ActionListener() {
-        public void actionPerformed(ActionEvent e) {
-            if (e.getSource() == clearButton) {
-                drawArea.clear();
-            } else if (e.getSource() == saveButton) {
-                drawArea.save(drawArea);
-            } else  if (e.getSource() == chooseColorButton) {
-                JColorChooser colorChooser = new JColorChooser();
-                JOptionPane.showConfirmDialog(null, colorChooser, "Choose color", JOptionPane.OK_CANCEL_OPTION);
-                drawArea.chooseColor(colorChooser.getColor());
-            } else if (e.getSource() == changeBrushWidthButton) {
-                JTextField changeBrushWidthTextField = new JTextField();
-                JOptionPane.showConfirmDialog(null, changeBrushWidthTextField, "Change brush width", JOptionPane.OK_CANCEL_OPTION);
-                drawArea.changeWidth(Integer.parseInt(changeBrushWidthTextField.getText()));
-            } else if (e.getSource() == rectangleButton) {
-
-            } else if (e.getSource() == circleButton) {
-
-            }
-        }
-    };
 
     public static void main(String[] args) {
         new PaintWindow().frame();
     }
 
-    public void frame() {
+    private void frame() {
         JFrame frame = new JFrame("Paint");
         Container content = frame.getContentPane();
         content.setLayout(new BorderLayout());
-        drawArea = new DrawArea();
+        drawArea = new DrawArea(0);
         content.add(drawArea, BorderLayout.CENTER);
+        content.add(buttons(), BorderLayout.NORTH);
+        frame.setSize(600, 600);
+        frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        frame.setVisible(true);
+    }
+
+    private JPanel buttons() {
         JPanel buttons = new JPanel();
-        circleButton = new JButton("Circle");
-        circleButton.addActionListener(actionListener);
+        brushButton = new JButton("Brush");
+        brushButton.addActionListener(e -> {
+
+        });
         rectangleButton = new JButton("Rectangle");
-        rectangleButton.addActionListener(actionListener);
+        rectangleButton.addActionListener(e -> {
+
+        });
+        circleButton = new JButton("Circle");
+        circleButton.addActionListener(e -> {
+
+        });
         clearButton = new JButton("Clear");
-        clearButton.addActionListener(actionListener);
+        clearButton.addActionListener(e -> drawArea.clear());
         saveButton = new JButton("Save");
-        saveButton.addActionListener(actionListener);
+        saveButton.addActionListener(e -> drawArea.save(drawArea));
         chooseColorButton = new JButton("Choose color");
-        chooseColorButton.addActionListener(actionListener);
+        chooseColorButton.addActionListener(e -> {
+            JColorChooser colorChooser = new JColorChooser();
+            JOptionPane.showConfirmDialog(null, colorChooser, "Choose color", JOptionPane.OK_CANCEL_OPTION);
+            drawArea.chooseColor(colorChooser.getColor());
+        });
         changeBrushWidthButton = new JButton("Change brush width");
-        changeBrushWidthButton.addActionListener(actionListener);
-        //buttons.add(rectangleButton);
-        //buttons.add(circleButton);
+        changeBrushWidthButton.addActionListener(e -> {
+            JTextField changeBrushWidthTextField = new JTextField();
+            JOptionPane.showConfirmDialog(null, changeBrushWidthTextField, "Change brush width", JOptionPane.OK_CANCEL_OPTION);
+            drawArea.changeWidth(Integer.parseInt(changeBrushWidthTextField.getText()));
+        });
+        buttons.add(brushButton);
+        buttons.add(rectangleButton);
+        buttons.add(circleButton);
         buttons.add(chooseColorButton);
         buttons.add(changeBrushWidthButton);
         buttons.add(clearButton);
         buttons.add(saveButton);
-        content.add(buttons, BorderLayout.NORTH);
-        frame.setSize(600, 600);
-        frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        frame.setVisible(true);
+        return buttons;
     }
 }
