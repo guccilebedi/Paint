@@ -1,4 +1,4 @@
-package lebedev_d_v.paint.buttonsTool;
+package lebedev_d_v.paint.buttonsTools;
 
 import lebedev_d_v.paint.view.DrawingAction;
 import lebedev_d_v.paint.view.DrawingArea;

@@ -1,7 +1,7 @@
 package lebedev_d_v.paint.view;
 
-import lebedev_d_v.paint.buttonsTool.DrawingButtonsTool;
-import lebedev_d_v.paint.buttonsTool.FileButtonsTool;
+import lebedev_d_v.paint.buttonsTools.DrawingButtonsTool;
+import lebedev_d_v.paint.buttonsTools.FileButtonsTool;
 
 import java.awt.*;
 import javax.swing.*;
