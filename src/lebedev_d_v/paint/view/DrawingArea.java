@@ -1,36 +1,100 @@
 package lebedev_d_v.paint.view;
 
+import lebedev_d_v.paint.drawingTools.EllipseDrawingTool;
+import lebedev_d_v.paint.drawingTools.LineDrawingTool;
+import lebedev_d_v.paint.drawingTools.RectangleDrawingTool;
+import lebedev_d_v.paint.fileTools.OpenFileTool;
+import lebedev_d_v.paint.fileTools.SaveFileTool;
+
 import java.awt.*;
 import java.awt.event.*;
+import java.awt.geom.Ellipse2D;
+import java.awt.geom.Rectangle2D;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
-import javax.imageio.ImageIO;
 import javax.swing.*;
 
 public class DrawingArea extends JComponent {
-
-    private Image image;
+    private BufferedImage bufferedImage;
     private Graphics2D g2;
-    private int newX, newY, oldX, oldY;
+    private Rectangle2D rectangle;
+    private Ellipse2D ellipse;
+    private FigureStyle figureStyle;
+    private Color color = Color.BLACK;
+    private SaveFileTool saveFileTool;
+    private OpenFileTool openFileTool;
+    private LineDrawingTool lineDrawingTool;
+    private RectangleDrawingTool rectangleDrawingTool;
+    private EllipseDrawingTool ellipseDrawingTool;
 
     public DrawingArea() {
     }
 
+    protected void paintComponent(Graphics g) {
+        if (bufferedImage == null) {
+            bufferedImage = (BufferedImage) createImage(getWidth(), getHeight());
+            g2 = (Graphics2D) bufferedImage.getGraphics();
+            g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+            clear();
+        }
+        g.drawImage(bufferedImage, 0, 0, null);
+        g2 = (Graphics2D) g;
+        g.setColor(color);
+        if (rectangle != null) {
+            switch (figureStyle) {
+                case FILLED -> g2.fill(rectangle);
+                case EMPTY -> g2.draw(rectangle);
+            }
+        }
+        if (ellipse != null) {
+            switch (figureStyle) {
+                case FILLED -> g2.fill(ellipse);
+                case EMPTY -> g2.draw(ellipse);
+            }
+        }
+    }
+
     public void chooseDrawingAction(DrawingAction drawingAction) {
         switch (drawingAction) {
-            case DRAW_LINE -> drawLine();
-            case DRAW_RECTANGLE -> drawRectangle();
-            case DRAW_CIRCLE -> drawCircle();
+            case DRAW_LINE -> {
+                lineDrawingTool = new LineDrawingTool(this, bufferedImage, g2, color, figureStyle);
+                lineDrawingTool.draw();
+            }
             case CLEAR -> clear();
-            case SAVE -> save(null);
+            case SAVE -> {
+                saveFileTool = new SaveFileTool(bufferedImage, null, g2);
+                saveFileTool.interactWithFile();
+            }
+        }
+    }
+
+    public void chooseDrawingAction(DrawingAction drawingAction, FigureStyle figureStyle) {
+        switch (drawingAction) {
+            case DRAW_RECTANGLE -> {
+                this.figureStyle = figureStyle;
+                rectangleDrawingTool = new RectangleDrawingTool(this, bufferedImage, g2, color, figureStyle);
+                rectangleDrawingTool.draw();
+            }
+            case DRAW_ELLIPSE -> {
+                this.figureStyle = figureStyle;
+                ellipseDrawingTool = new EllipseDrawingTool(this, bufferedImage, g2, color, figureStyle);
+                ellipseDrawingTool.draw();
+            }
         }
     }
 
     public void chooseDrawingAction(DrawingAction drawingAction, File file) throws IOException {
         switch (drawingAction) {
-            case OPEN_FILE -> openFile(file);
-            case SAVE_AS -> save(file);
+            case OPEN_FILE -> {
+                openFileTool = new OpenFileTool(bufferedImage, file, g2);
+                bufferedImage = openFileTool.interactWithFile();
+                repaint();
+            }
+            case SAVE_AS -> {
+                saveFileTool = new SaveFileTool(bufferedImage, file, g2);
+                saveFileTool.interactWithFile();
+            }
         }
     }
 
@@ -42,17 +106,7 @@ public class DrawingArea extends JComponent {
         changeBrushWidth(width);
     }
 
-    protected void paintComponent(Graphics g) {
-        if (image == null) {
-            image = createImage(getWidth(), getHeight());
-            g2 = (Graphics2D) image.getGraphics();
-            g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-            clear();
-        }
-        g.drawImage(image, 0, 0, null);
-    }
-
-    private void removeListeners() {
+    public void removeListeners() {
         for (MouseListener listener : getMouseListeners()) {
             removeMouseListener(listener);
         }
@@ -61,146 +115,38 @@ public class DrawingArea extends JComponent {
         }
     }
 
-    private void openFile(File file) throws IOException {
-        image = ImageIO.read(file);
-        g2 = (Graphics2D) image.getGraphics();
-        repaint();
-        chooseColor(Color.BLACK);
-    }
-
-    private void drawLine() {
-        setDoubleBuffered(false);
-        removeListeners();
-        addMouseListener(new MouseAdapter() {
-            public void mousePressed(MouseEvent e) {
-                oldX = e.getX();
-                oldY = e.getY();
-            }
-        });
-        addMouseMotionListener(new MouseMotionAdapter() {
-            public void mouseDragged(MouseEvent e) {
-                newX = e.getX();
-                newY = e.getY();
-                if (g2 != null) {
-                    g2.drawLine(oldX, oldY, newX, newY);
-                    repaint();
-                    oldX = newX;
-                    oldY = newY;
-                }
-            }
-        });
-    }
-
-    private void drawRectangle() {
-        setDoubleBuffered(false);
-        removeListeners();
-        addMouseListener(new MouseAdapter() {
-            @Override
-            public void mousePressed(MouseEvent e) {
-                oldX = e.getX();
-                oldY = e.getY();
-            }
-        });
-        addMouseListener(new MouseAdapter() {
-            @Override
-            public void mouseReleased(MouseEvent e) {
-                newX = e.getX();
-                newY = e.getY();
-                if (g2 != null) {
-                    if (newX > oldX) {
-                        if (newY > oldY) {
-                            g2.fillRect(oldX, oldY, newX - oldX, newY - oldY);
-                        } else {
-                            g2.fillRect(oldX, newY, newX - oldX, oldY - newY);
-                        }
-                    } else {
-                        if (newY > oldY) {
-                            g2.fillRect(newX, oldY, oldX - newX, newY - oldY);
-                        } else {
-                            g2.fillRect(newX, newY, oldX - newX, oldY - newY);
-                        }
-                    }
-                    repaint();
-                    oldX = newX;
-                    oldY = newY;
-                }
-            }
-        });
-    }
-
-    private void drawCircle() {
-        setDoubleBuffered(false);
-        removeListeners();
-        addMouseListener(new MouseAdapter() {
-            @Override
-            public void mousePressed(MouseEvent e) {
-                oldX = e.getX();
-                oldY = e.getY();
-            }
-        });
-        addMouseListener(new MouseAdapter() {
-            @Override
-            public void mouseReleased(MouseEvent e) {
-                newX = e.getX();
-                newY = e.getY();
-                if (g2 != null) {
-                    if (newX > oldX) {
-                        if (newY > oldY) {
-                            g2.fillOval(oldX, oldY, newX - oldX, newY - oldY);
-                        } else {
-                            g2.fillOval(oldX, newY, newX - oldX, oldY - newY);
-                        }
-                    } else {
-                        if (newY > oldY) {
-                            g2.fillOval(newX, oldY, oldX - newX, newY - oldY);
-                        } else {
-                            g2.fillOval(newX, newY, oldX - newX, oldY - newY);
-                        }
-                    }
-                    repaint();
-                    oldX = newX;
-                    oldY = newY;
-                }
-            }
-        });
-    }
-
-    private void changeBrushWidth(int width) {
-        g2.setStroke(new BasicStroke(width));
+    private void changeBrushWidth(int brushWidth) {
+        if (lineDrawingTool != null) {
+            lineDrawingTool.setBrushWidth(brushWidth);
+        }
     }
 
     private void chooseColor(Color color) {
-        g2.setColor(color);
-        repaint();
-    }
-
-    private void save(File file) {
-        BufferedImage bImg = new BufferedImage(getWidth(), getHeight(), BufferedImage.TYPE_INT_RGB);
-        Graphics2D cg = bImg.createGraphics();
-        paintAll(cg);
-        try {
-            if (file == null) {
-                int fileNameSuffix = 0;
-                String fileName = "./images/image" + fileNameSuffix + ".png";
-                file = new File(fileName);
-                while (file.exists()) {
-                    fileNameSuffix++;
-                    fileName = "./images/image" + fileNameSuffix + ".png";
-                    file = new File(fileName);
-                }
-                ImageIO.write(bImg, "png", new File(fileName));
-            }
-            ImageIO.write(bImg, "png", file);
-        } catch (IOException e) {
-            e.printStackTrace();
+        this.color = color;
+        if (rectangleDrawingTool != null) {
+            rectangleDrawingTool.setColor(color);
+        }
+        if (ellipseDrawingTool != null) {
+            ellipseDrawingTool.setColor(color);
+        }
+        if (lineDrawingTool != null) {
+            lineDrawingTool.setColor(color);
         }
     }
 
     private void clear() {
-        Color temp = g2.getColor();
+        g2 = (Graphics2D) bufferedImage.getGraphics();
         g2.setColor(Color.white);
         g2.fillRect(0, 0, getWidth(), getHeight());
-        g2.setColor(temp);
+        g2.setColor(color);
         repaint();
+    }
+
+    public void setRectangle(Rectangle2D rectangle) {
+        this.rectangle = rectangle;
+    }
+
+    public void setEllipse(Ellipse2D ellipse) {
+        this.ellipse = ellipse;
     }
 }
